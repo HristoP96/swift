@@ -21,13 +21,26 @@ public class Task2b_PrintMatrix {
         {
             for(int j = 0; j<col;j++)
             {
-                arr[i][j] = idx;
+                arr[j][i] = idx;
                 idx++;
                 
             }
         }
         
-        int [][]ar = new int[col][row];
+        for(int i = 0; i<row;i++)
+        {
+            for(int j=0;j<col;j++)
+            {
+                 
+              if((j+1)%2==0){
+                  System.out.printf("%4d",arr[row-1-i][j]);
+                } else System.out.printf("%4d",arr[i][j]);
+               
+                
+            }
+             System.out.println();
+        }
+        
         
         
     }
