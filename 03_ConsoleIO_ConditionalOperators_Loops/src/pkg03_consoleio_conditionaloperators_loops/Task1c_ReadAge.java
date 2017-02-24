@@ -9,7 +9,7 @@ public class Task1c_ReadAge {
             int age =  sc.nextInt();
             
             
-            String answer ;
+            
             
             if(age >= 18)
             {

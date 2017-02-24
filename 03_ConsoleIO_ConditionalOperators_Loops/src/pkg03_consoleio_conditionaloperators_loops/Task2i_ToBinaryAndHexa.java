@@ -24,14 +24,14 @@ public class Task2i_ToBinaryAndHexa {
         while (number >= 1) {
             
             result = number % 2;
-            Binary += result;
+            Binary = result + Binary;
 
             number /= 2;
 
         }
         
-        rev = new StringBuffer(Binary).reverse().toString();//нямаше как да напиша задачата без стринг и намерих този метод да ми обърне числото
-        System.out.println(rev);
+      //  rev = new StringBuffer(Binary).reverse().toString();//нямаше как да напиша задачата без стринг и намерих този метод да ми обърне числото
+        System.out.println(Binary);
 
     }
 }

@@ -14,14 +14,14 @@ public class Task2a_PrintSumOfN {
         Scanner sc = new Scanner(System.in);
         
         int number = sc.nextInt();
-        int sum;
-        int i =0;
+        int sum=0;
+        int i ;
         
-        for(sum = 1;sum<=number;sum++)
+        for(i = 1;i<=number;i++)
         {
-            i+=sum;
+            sum+=i;
         }
-        System.out.println(i);
+        System.out.println(sum);
     }
     
 }

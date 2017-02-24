@@ -18,12 +18,12 @@ public class Task2g_PrintSumOfDigits {
         
         
         int sum=0;
-        int sumant;
+        int digit;
         
         while(number !=0)
         {
-            sumant = number%10;
-            sum+=sumant;
+            digit = number%10;
+            sum+=digit;
             number /=10;
         }
         

@@ -17,20 +17,20 @@ public class Task3d_PrintReversedSequence {
         int numbers = sc.nextInt() ;
         int i ;
         String sequence = " ";
-        String rev = " ";
+        
         
         for(i  = 0;i<numbers;i++)
         {
             int number  =  sc.nextInt();
-             sequence +=  Integer.toString(number) + " ";
+             sequence =Integer.toString(number)+" " +sequence   ;
              
-             rev += sequence ;
+             
             
             
             
         }
-        rev = new StringBuilder (sequence).reverse().toString();
-        System.out.println(rev);
+       
+        System.out.println(sequence);
     }
     
 }

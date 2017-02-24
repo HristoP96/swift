@@ -12,12 +12,15 @@ package pkg03_consoleio_conditionaloperators_loops;
 public class Task5c_PrintEverySentence {
     public static void main(String[] args) {
         String stc = "Peter loves dogs.He doesn’t like cats.Maria likes cats";
-       
+        char[] ch = stc.toCharArray();
         
         
-       for(String  dot :stc.split("\\."))
-       {
-           System.out.println(dot);
+       for(char  c :ch)
+       { 
+           System.out.print(c);
+           if(c=='.'||c=='!'||c=='?'){
+           System.out.println();
+           }
        }
     }
     
