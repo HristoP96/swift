@@ -20,7 +20,7 @@ import personaldetails.Citizen;
 public interface CitizenStorage {
     public Citizen getCitizen(int id) throws DALException;
     
-    public int insertCitizen(Citizen citizen,Address adress,List<Education> educations,Stack<SocialInsuranceRecord> insurances) throws DALException;
+    public int insertCitizen(Citizen citizen) throws DALException;
     
     public void removeCitizen(int id) throws DALException;
 }

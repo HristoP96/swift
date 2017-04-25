@@ -9,6 +9,7 @@ import AdressStorage.MySqlAddressStorage;
 import CitizenStorage.MySqlCitizenStorage;
 import DALException.DALException;
 import EducationStorage.MySqlEducationStorage;
+import SocialInsuranceStorage.MySqlSocialInsuranceStorage;
 import address.Address;
 import education.Education;
 import education.EducationDegree;
@@ -32,6 +33,6 @@ public class MySqlDataStorage {
     public static MySqlCitizenStorage citizenStorage = new MySqlCitizenStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
     public static MySqlAddressStorage addressStorage = new MySqlAddressStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
     public static MySqlEducationStorage educationStorage = new MySqlEducationStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
-    
+    public static MySqlSocialInsuranceStorage insuranceStorage = new MySqlSocialInsuranceStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
 
 }

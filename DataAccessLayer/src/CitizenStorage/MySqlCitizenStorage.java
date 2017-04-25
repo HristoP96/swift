@@ -40,12 +40,12 @@ public class MySqlCitizenStorage implements CitizenStorage {
     private final String _dbUsername;
     private final String _dbPassword;
 
-    private final String getPersonAddress = "SELECT * FROM citizen_registrations.people\n"
+    private final String getPerson = "SELECT * FROM citizen_registrations.people\n"
             + "JOIN citizen_registrations.addresses\n"
             + "ON addresses.id = citizen_registrations.people.addressID\n"
-            + "where citizen_registrations.people.id =?";
+            + "WHERE citizen_registrations.people.id =?";
 
-    private final String insertMatches = "INSERT INTO citizen_registrations.people_educations(`person_id`,`education_id`)"
+    private final String insertEducationMatches = "INSERT INTO citizen_registrations.people_educations(`person_id`,`education_id`)"
             + "VALUES(?,?);";
 
     private final String getEducationsStatement = "SELECT * FROM citizen_registrations.people_educations\n"
@@ -53,18 +53,28 @@ public class MySqlCitizenStorage implements CitizenStorage {
             + "ON citizen_registrations.educations.id = citizen_registrations.people_educations.education_id\n"
             + "WHERE citizen_registrations.people_educations.person_id =?";
 
+    private static String getInsurancesStatement = "SELECT * FROM citizen_registrations.people_insurances\n"
+            + "INNER JOIN citizen_registrations.socialinsurances\n"
+            + "ON citizen_registrations.socialinsurances.id = citizen_registrations.people_insurances.insurance_id\n"
+            + "WHERE citizen_registrations.people_insurances.person_id =?";
+
     private final String insertPerson = "INSERT INTO citizen_registrations.people (`first_name`,`middle_name`,`last_name`,`gender_id`,`height`,`dateOfBirth`,`addressID`)"
             + "VALUES (?, ?, ?, ?, ?, ?,?);";
 
-    private final String selectAddress = "SELECT people.addressID FROM citizen_registrations.people where people.id=?;";
+    private final String selectAddress = "SELECT people.addressID FROM citizen_registrations.people WHERE people.id=?;";
 
-    private final String removeStatement = "DELETE FROM citizen_registrations.people where id =?";
+    private final String removeCitizen = "DELETE FROM citizen_registrations.people WHERE id =?";
 
-    private final String removeMatches = "DELETE FROM citizen_registrations.people_educations where person_id=?";
+    private final String removeEducationMatches = "DELETE FROM citizen_registrations.people_educations WHERE person_id=?";
 
-    private final String selectEducations = "SELECT education_id FROM citizen_registrations.people_educations where person_id =?;";
+    private final String selectEducations = "SELECT education_id FROM citizen_registrations.people_educations WHERE person_id =?;";
 
+    private final String removeInsuranceMatches = "DELETE FROM citizen_registrations.people_insurances WHERE person_id=?";
+
+    private final String selectInsurances = "SELECT insurance_id FROM  citizen_registrations.people_insurances  WHERE person_id=?";
     
+    private final String insertInsuranceMatches = "INSERT INTO citizen_registrations.people_insurances(`person_id`,`insurance_id`)"+
+            "VALUES(?,?);";
 
     public MySqlCitizenStorage(String dbConnectionString, String dbUsername, String dbPassword) {
         _dbConnectionString = dbConnectionString;
@@ -76,8 +86,9 @@ public class MySqlCitizenStorage implements CitizenStorage {
     public Citizen getCitizen(int id) throws DALException {
         Citizen citizen = null;
         Education education = null;
+        SocialInsuranceRecord insurance = null;
         try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
-                PreparedStatement pstmt = conn.prepareStatement(getPersonAddress)) {
+                PreparedStatement pstmt = conn.prepareStatement(getPerson)) {
             pstmt.setInt(1, id);
 
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -110,6 +121,15 @@ public class MySqlCitizenStorage implements CitizenStorage {
                     }
                 }
             }
+            try (PreparedStatement stmt = conn.prepareStatement(getInsurancesStatement)) {
+                stmt.setInt(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        insurance = convertToInsurance(rs);
+                        citizen.addSocialInsuranceRecord(insurance);
+                    }
+                }
+            }
 
             return citizen;
 
@@ -120,27 +140,25 @@ public class MySqlCitizenStorage implements CitizenStorage {
     }
 
     @Override
-    public int insertCitizen(Citizen citizen, Address adress, List<Education> educations, Stack<SocialInsuranceRecord> insurances) throws DALException {
+    public int insertCitizen(Citizen citizen) throws DALException {
 
         try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
                 PreparedStatement pstmt = conn.prepareStatement(insertPerson)) {
 
-            citizen.setAddress(adress);
             pstmt.setString(1, citizen.getFirstName());
             pstmt.setString(2, citizen.getMiddleName());
             pstmt.setString(3, citizen.getLastName());
             pstmt.setInt(4, citizen.getGender().ordinal());
             pstmt.setInt(5, citizen.getHeight());
             pstmt.setDate(6, Date.valueOf(citizen.getDateOfBirth()));
-            pstmt.setInt(7, addressStorage.insertAddress(adress));
+            pstmt.setInt(7, addressStorage.insertAddress(citizen.getAddress()));
             pstmt.execute();
             try (ResultSet rs = pstmt.executeQuery("SELECT LAST_INSERT_ID()")) {
                 rs.next();
 
-                if (!(educations.isEmpty())) {
-                    for (Education education : educations) {
-                        try (PreparedStatement stmt = conn.prepareStatement((insertMatches))) {
-                            citizen.addEducation(education);
+                if (!(citizen.getEducations().isEmpty())) {
+                    for (Education education : citizen.getEducations()) {
+                        try (PreparedStatement stmt = conn.prepareStatement((insertEducationMatches))) {
                             stmt.setInt(1, rs.getInt(1));
                             stmt.setInt(2, educationStorage.insertEducation(education));
                             stmt.execute();
@@ -148,11 +166,12 @@ public class MySqlCitizenStorage implements CitizenStorage {
 
                     }
                 }
-                if (!(insurances.isEmpty())) {
-                    for (SocialInsuranceRecord insurance : insurances) {
-                        
-                        citizen.addSocialInsuranceRecord(insurance);
-
+                if (!(citizen.getSocialInsuranceRecords().isEmpty())) {
+                    for (SocialInsuranceRecord insurance : citizen.getSocialInsuranceRecords()) {
+                        try(PreparedStatement stmt = conn.prepareStatement(insertInsuranceMatches)){
+                            stmt.setInt(1, rs.getInt(1));
+                            stmt.setInt(2, insuranceStorage.insertSocialInsurance(insurance));
+                        }
                     }
                 }
                 return rs.getInt(1);
@@ -167,10 +186,11 @@ public class MySqlCitizenStorage implements CitizenStorage {
     @Override
     public void removeCitizen(int id) throws DALException {
         try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
-                PreparedStatement pstmt = conn.prepareStatement(removeStatement)) {
+                PreparedStatement pstmt = conn.prepareStatement(removeCitizen)) {
             pstmt.setInt(1, id);
 
             removeEducations(id);
+            removeInsurances(id);
             int AdressID;
 
             try (PreparedStatement stmt = conn.prepareStatement(selectAddress)) {
@@ -233,9 +253,15 @@ public class MySqlCitizenStorage implements CitizenStorage {
         }
     }
 
-    private void removeMatches(int id) throws SQLException {
+    private static SocialInsuranceRecord convertToInsurance(final ResultSet rs) throws SQLException {
+        return new SocialInsuranceRecord(rs.getInt("year"),
+                rs.getInt("month"),
+                rs.getDouble("amount"));
+    }
+
+    private void removeEducationMatches(int id) throws SQLException {
         try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
-                PreparedStatement pstmt = conn.prepareStatement(removeMatches)) {
+                PreparedStatement pstmt = conn.prepareStatement(removeEducationMatches)) {
             pstmt.setInt(1, id);
             pstmt.execute();
         }
@@ -248,7 +274,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
             pstmt.setInt(1, id);
 
             try (ResultSet rs = pstmt.executeQuery()) {
-                removeMatches(id);
+                removeEducationMatches(id);
                 while (rs.next()) {
                     educationStorage.removeEducation(rs.getInt("education_id"));
                 }
@@ -256,4 +282,27 @@ public class MySqlCitizenStorage implements CitizenStorage {
         }
     }
 
+    private void removeInsuranceMatches(int id) throws SQLException {
+        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
+                PreparedStatement pstmt = conn.prepareStatement(removeInsuranceMatches)) {
+            pstmt.setInt(1, id);
+            pstmt.execute();
+
+        }
+    }
+
+    private void removeInsurances(int id) throws SQLException {
+        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
+                PreparedStatement pstmt = conn.prepareStatement(selectInsurances)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                removeInsuranceMatches(id);
+                while (rs.next()) {
+                    insuranceStorage.removeSocialInsurance(rs.getInt("insurance_id"));
+                }
+            }
+
+        }
+    }
 }
