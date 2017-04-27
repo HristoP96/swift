@@ -23,10 +23,10 @@ public class MySqlSocialInsuranceStorage implements SocialInsuranceStorage {
     private final String _dbConnectionString;
     private final String _dbUsername;
     private final String _dbPassword;
-    private final String getSocialInsurance = "SELECT * FROM citizen_registrations.socialinsurance where id = ?";
-    private final String addSocialInsurance = "INSERT INTO citizen_registrations.socialinsurance(`year`,`month`,`amount`)"
+    private final String getSocialInsurance = "SELECT * FROM citizen_registrations.socialinsurances where id = ?";
+    private final String addSocialInsurance = "INSERT INTO citizen_registrations.socialinsurances(`year`,`month`,`amount`)"
             + "VALUES(?,?,?);";
-    private final String removeInsurance = "DELETE FROM citizen_registrations.socialinsurance where id = ?";
+    private final String removeInsurance = "DELETE FROM citizen_registrations.socialinsurances where id =?";
 
     public MySqlSocialInsuranceStorage(String _dbConnectionString, String _dbUsername, String _dbPassword) {
         this._dbConnectionString = _dbConnectionString;

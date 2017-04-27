@@ -28,6 +28,7 @@ import MySqlDataStorage.MySqlDataStorage.*;
 import static MySqlDataStorage.MySqlDataStorage.*;
 import insurance.SocialInsuranceRecord;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Stack;
 
 /**
@@ -40,23 +41,14 @@ public class MySqlCitizenStorage implements CitizenStorage {
     private final String _dbUsername;
     private final String _dbPassword;
 
-    private final String getPerson = "SELECT * FROM citizen_registrations.people\n"
-            + "JOIN citizen_registrations.addresses\n"
-            + "ON addresses.id = citizen_registrations.people.addressID\n"
-            + "WHERE citizen_registrations.people.id =?";
+    private final String getPerson = "SELECT * FROM citizen_registrations.people WHERE citizen_registrations.people.id =?";
 
     private final String insertEducationMatches = "INSERT INTO citizen_registrations.people_educations(`person_id`,`education_id`)"
             + "VALUES(?,?);";
 
-    private final String getEducationsStatement = "SELECT * FROM citizen_registrations.people_educations\n"
-            + "INNER JOIN citizen_registrations.educations\n"
-            + "ON citizen_registrations.educations.id = citizen_registrations.people_educations.education_id\n"
-            + "WHERE citizen_registrations.people_educations.person_id =?";
+    private final String getEducationsStatement = "SELECT * FROM citizen_registrations.people_educations WHERE citizen_registrations.people_educations.person_id =?";
 
-    private static String getInsurancesStatement = "SELECT * FROM citizen_registrations.people_insurances\n"
-            + "INNER JOIN citizen_registrations.socialinsurances\n"
-            + "ON citizen_registrations.socialinsurances.id = citizen_registrations.people_insurances.insurance_id\n"
-            + "WHERE citizen_registrations.people_insurances.person_id =?";
+    private static String getInsurancesStatement = "SELECT * FROM citizen_registrations.people_insurances WHERE citizen_registrations.people_insurances.person_id =?";
 
     private final String insertPerson = "INSERT INTO citizen_registrations.people (`first_name`,`middle_name`,`last_name`,`gender_id`,`height`,`dateOfBirth`,`addressID`)"
             + "VALUES (?, ?, ?, ?, ?, ?,?);";
@@ -72,9 +64,9 @@ public class MySqlCitizenStorage implements CitizenStorage {
     private final String removeInsuranceMatches = "DELETE FROM citizen_registrations.people_insurances WHERE person_id=?";
 
     private final String selectInsurances = "SELECT insurance_id FROM  citizen_registrations.people_insurances  WHERE person_id=?";
-    
-    private final String insertInsuranceMatches = "INSERT INTO citizen_registrations.people_insurances(`person_id`,`insurance_id`)"+
-            "VALUES(?,?);";
+
+    private final String insertInsuranceMatches = "INSERT INTO citizen_registrations.people_insurances(`person_id`,`insurance_id`)"
+            + "VALUES(?,?);";
 
     public MySqlCitizenStorage(String dbConnectionString, String dbUsername, String dbPassword) {
         _dbConnectionString = dbConnectionString;
@@ -85,8 +77,10 @@ public class MySqlCitizenStorage implements CitizenStorage {
     @Override
     public Citizen getCitizen(int id) throws DALException {
         Citizen citizen = null;
-        Education education = null;
-        SocialInsuranceRecord insurance = null;
+        List<SocialInsuranceRecord> insurances = new ArrayList<>();
+        insurances = getInsurances(id);
+        List<Education> educations = new ArrayList<>();
+        educations = getEducations(id);
         try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
                 PreparedStatement pstmt = conn.prepareStatement(getPerson)) {
             pstmt.setInt(1, id);
@@ -101,37 +95,56 @@ public class MySqlCitizenStorage implements CitizenStorage {
                         rs.getInt("height"),
                         rs.getDate("dateOfBirth").toLocalDate());
 
-                citizen.setAddress(convertToAddress(rs));
-
-            }
-            try (PreparedStatement stmt = conn.prepareStatement(getEducationsStatement)) {
-                stmt.setInt(1, id);
-
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        education = converToEducation(rs);
-
-                        if (education instanceof GradedEducation && rs.getBoolean("graduated") == true) {
-
-                            ((GradedEducation) education).gotGraduated(rs.getFloat("final_grad"));
-
-                        }
-                        citizen.addEducation(education);
-
-                    }
+                citizen.setAddress(addressStorage.getAddress(rs.getInt("addressID")));
+                for (Education education : educations) {
+                    citizen.addEducation(education);
                 }
-            }
-            try (PreparedStatement stmt = conn.prepareStatement(getInsurancesStatement)) {
-                stmt.setInt(1, id);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        insurance = convertToInsurance(rs);
-                        citizen.addSocialInsuranceRecord(insurance);
-                    }
-                }
-            }
+                for (SocialInsuranceRecord insurance : insurances) {
+                    citizen.addSocialInsuranceRecord(insurance);
 
-            return citizen;
+                }
+                
+                return citizen;
+
+            }
+        } catch (SQLException ex) {
+            throw new DALException("SQL failed \n" + ex.getSQLState() + "\t" + ex.getMessage() + "\t" + ex.getErrorCode(), ex);
+
+        }
+    }
+
+    @Override
+    public List<Education> getEducations(int id) throws DALException {
+        List<Education> educations = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
+                PreparedStatement pstmt = conn.prepareStatement(getEducationsStatement)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    educations.add(educationStorage.getEducation(rs.getInt("education_id")));
+
+                }
+                return educations;
+            }
+        } catch (SQLException ex) {
+            throw new DALException("SQL failed \n" + ex.getSQLState() + "\t" + ex.getMessage() + "\t" + ex.getErrorCode(), ex);
+
+        }
+    }
+
+    @Override
+    public List<SocialInsuranceRecord> getInsurances(int id) throws DALException {
+        List<SocialInsuranceRecord> insurances = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
+                PreparedStatement stmt = conn.prepareStatement(getInsurancesStatement)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    insurances.add(insuranceStorage.getSocialInsurance(rs.getInt("insurance_id")));
+                }
+                return insurances;
+            }
 
         } catch (SQLException ex) {
             throw new DALException("SQL failed \n" + ex.getSQLState() + "\t" + ex.getMessage() + "\t" + ex.getErrorCode(), ex);
@@ -168,9 +181,10 @@ public class MySqlCitizenStorage implements CitizenStorage {
                 }
                 if (!(citizen.getSocialInsuranceRecords().isEmpty())) {
                     for (SocialInsuranceRecord insurance : citizen.getSocialInsuranceRecords()) {
-                        try(PreparedStatement stmt = conn.prepareStatement(insertInsuranceMatches)){
+                        try (PreparedStatement stmt = conn.prepareStatement(insertInsuranceMatches)) {
                             stmt.setInt(1, rs.getInt(1));
                             stmt.setInt(2, insuranceStorage.insertSocialInsurance(insurance));
+                            stmt.execute();
                         }
                     }
                 }
@@ -209,54 +223,6 @@ public class MySqlCitizenStorage implements CitizenStorage {
             throw new DALException("SQL failed \n" + ex.getSQLState() + "%n" + ex.getMessage() + "%n" + ex.getErrorCode(), ex);
 
         }
-    }
-
-    private static Address convertToAddress(final ResultSet rs) throws SQLException {
-
-        int floor = rs.getInt("floor");
-        int apart = rs.getInt("apartmentNo");
-        if (!(floor == 0 && apart == 0)) {
-            return new Address(rs.getString("country"),
-                    rs.getString("city"),
-                    rs.getString("municipality"),
-                    rs.getString("postal_code"),
-                    rs.getString("street"),
-                    rs.getString("number"),
-                    rs.getInt("floor"),
-                    rs.getInt("apartmentNo"));
-        }
-        return new Address(rs.getString("country"),
-                rs.getString("city"),
-                rs.getString("municipality"),
-                rs.getString("postal_code"),
-                rs.getString("street"),
-                rs.getString("number"));
-    }
-
-    private static Education converToEducation(final ResultSet rs) throws SQLException {
-        switch (rs.getInt("type_id")) {
-            case 1:
-                return new PrimaryEducation(rs.getString("institution_name"),
-                        rs.getDate("enrollment_date").toLocalDate(),
-                        rs.getDate("graduation_date").toLocalDate());
-
-            case 2:
-                return new SecondaryEducation(rs.getString("institution_name"),
-                        rs.getDate("enrollment_date").toLocalDate(),
-                        rs.getDate("graduation_date").toLocalDate());
-            default:
-                return new HigherEducation(rs.getString("institution_name"),
-                        rs.getDate("enrollment_date").toLocalDate(),
-                        rs.getDate("graduation_date").toLocalDate(),
-                        EducationDegree.values()[rs.getInt("type_id") - 1]);
-
-        }
-    }
-
-    private static SocialInsuranceRecord convertToInsurance(final ResultSet rs) throws SQLException {
-        return new SocialInsuranceRecord(rs.getInt("year"),
-                rs.getInt("month"),
-                rs.getDouble("amount"));
     }
 
     private void removeEducationMatches(int id) throws SQLException {

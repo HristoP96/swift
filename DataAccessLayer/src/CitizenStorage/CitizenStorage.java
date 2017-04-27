@@ -23,4 +23,8 @@ public interface CitizenStorage {
     public int insertCitizen(Citizen citizen) throws DALException;
     
     public void removeCitizen(int id) throws DALException;
+    
+    public List<SocialInsuranceRecord> getInsurances(int id) throws DALException;
+    
+    public List<Education> getEducations(int id) throws DALException ;
 }
