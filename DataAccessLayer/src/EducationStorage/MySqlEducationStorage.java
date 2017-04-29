@@ -42,6 +42,7 @@ public class MySqlEducationStorage implements EducationStorage {
 
     @Override
     public Education getEducation(int id) throws DALException {
+        Education education;
         try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
                 PreparedStatement pstmt = conn.prepareStatement(getStatement)) {
             pstmt.setInt(1, id);
@@ -50,19 +51,35 @@ public class MySqlEducationStorage implements EducationStorage {
                 rs.next();
                 switch (rs.getInt("type_id")) {
                     case 1:
-                        return new PrimaryEducation(rs.getString("institution_name"),
+                        education = new PrimaryEducation(rs.getString("institution_name"),
                                 rs.getDate("enrollment_date").toLocalDate(),
                                 rs.getDate("graduation_date").toLocalDate());
-
+                        if (rs.getBoolean("graduated")) {
+                            education.gotGraduated();
+                        }
+                        return education;
                     case 2:
-                        return new SecondaryEducation(rs.getString("institution_name"),
+                        education = new SecondaryEducation(rs.getString("institution_name"),
                                 rs.getDate("enrollment_date").toLocalDate(),
                                 rs.getDate("graduation_date").toLocalDate());
+                        Float check = rs.getFloat("final_grad");
+                        if (!(check == null)) {
+                            ((GradedEducation) education).gotGraduated(check);
+                            return ((GradedEducation) education);
+                        }
+                        return education;
+
                     default:
-                        return new HigherEducation(rs.getString("institution_name"),
+                        education = new HigherEducation(rs.getString("institution_name"),
                                 rs.getDate("enrollment_date").toLocalDate(),
                                 rs.getDate("graduation_date").toLocalDate(),
                                 EducationDegree.values()[rs.getInt("type_id") - 1]);
+                        check = rs.getFloat("final_grad");
+                        if (!(check == null)) {
+                            ((GradedEducation) education).gotGraduated(check);
+                            return ((GradedEducation) education);
+                        }
+                        return education;
 
                 }
 
@@ -82,17 +99,17 @@ public class MySqlEducationStorage implements EducationStorage {
             pstmt.setString(2, education.getInstitutionName());
             pstmt.setDate(3, Date.valueOf(education.getEnrollmentDate()));
             pstmt.setDate(4, Date.valueOf(education.getGraduationDate()));
-            
-            if ((education instanceof GradedEducation )&& education.isGraduated()) {
-                pstmt.setBoolean(5,education.isGraduated());
+
+            if (education instanceof GradedEducation && (education.isGraduated())) {
+                pstmt.setBoolean(5, ((GradedEducation) education).isGraduated());
                 pstmt.setDouble(6, ((GradedEducation) education).getFinalGrade());
-            }else{
+
+            } else {
                 pstmt.setNull(5, java.sql.Types.INTEGER);
                 pstmt.setNull(6, java.sql.Types.INTEGER);
             }
-                
-            
             pstmt.execute();
+
             try (ResultSet rs = pstmt.executeQuery("SELECT LAST_INSERT_ID()")) {
                 rs.next();
                 return rs.getInt(1);
@@ -110,8 +127,6 @@ public class MySqlEducationStorage implements EducationStorage {
                 PreparedStatement pstmt = conn.prepareStatement(removeStatement)) {
             pstmt.setInt(1, id);
             pstmt.execute();
-
-           
 
         } catch (SQLException ex) {
             throw new DALException("SQL failed \n" + ex.getSQLState() + "\n" + ex.getMessage() + "\n" + ex.getErrorCode(), ex);

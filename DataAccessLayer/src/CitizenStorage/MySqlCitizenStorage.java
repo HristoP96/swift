@@ -17,6 +17,7 @@ import java.util.List;
 import personaldetails.Citizen;
 import personaldetails.Gender;
 import static MySqlDataStorage.MySqlDataStorage.*;
+import education.GradedEducation;
 import insurance.SocialInsuranceRecord;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -82,6 +83,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
 
                 citizen.setAddress(addressStorage.getAddress(rs.getInt("addressID")));
                 for (Education education : educations) {
+
                     citizen.addEducation(education);
                 }
                 for (SocialInsuranceRecord insurance : insurances) {
@@ -159,15 +161,17 @@ public class MySqlCitizenStorage implements CitizenStorage {
                     try (PreparedStatement stmt = conn.prepareStatement((insertEducationMatches))) {
                         for (Education education : citizen.getEducations()) {
                             stmt.setInt(1, rs.getInt(1));
+
                             stmt.setInt(2, educationStorage.insertEducation(education));
+
                             stmt.execute();
                         }
 
                     }
                 }
-                if(!(citizen.getSocialInsuranceRecords().isEmpty())){
-                insuranceStorage.insertInsurances(citizen);
-            }
+                if (!(citizen.getSocialInsuranceRecords().isEmpty())) {
+                    insuranceStorage.insertInsurances(citizen);
+                }
                 return rs.getInt(1);
             }
 
