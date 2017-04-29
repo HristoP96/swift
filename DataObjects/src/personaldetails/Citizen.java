@@ -12,7 +12,7 @@ import java.util.List;
 public final class Citizen {
 
     private final LocalDate EARLIEST_BIRTH_DATE = LocalDate.of(1900, 1, 1);
-
+    private int _id;
     private String _firstName;
     private String _middleName;
     private String _lastName;
@@ -166,6 +166,8 @@ public final class Citizen {
     public int getHeight() {
         return _height;
     }
+    
+    
 
     public void setHeight(int height) {
         if (!(40 < height && height < 350)) {
@@ -188,5 +190,16 @@ public final class Citizen {
 
     public void addSocialInsuranceRecord(SocialInsuranceRecord record) {
         _socialInsuranceRecords.add(record);
+    }
+    
+    public void setID(int id){
+        if(id<1){
+            throw new IllegalArgumentException("ID must be positive.");
+        }
+        _id=id;
+    }
+    
+    public int getID(){
+        return _id;
     }
 }
