@@ -7,18 +7,9 @@ package MySqlDataStorage;
 
 import AdressStorage.MySqlAddressStorage;
 import CitizenStorage.MySqlCitizenStorage;
-import DALException.DALException;
 import EducationStorage.MySqlEducationStorage;
 import SocialInsuranceStorage.MySqlSocialInsuranceStorage;
-import address.Address;
-import education.Education;
-import education.EducationDegree;
-import education.GradedEducation;
-import education.HigherEducation;
-import java.time.LocalDate;
-import java.time.Month;
-import personaldetails.Citizen;
-import personaldetails.Gender;
+
 
 /**
  *

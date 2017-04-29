@@ -12,6 +12,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import personaldetails.Citizen;
 
 /**
  *
@@ -24,8 +25,8 @@ public class MySqlSocialInsuranceStorage implements SocialInsuranceStorage {
     private final String _dbUsername;
     private final String _dbPassword;
     private final String getSocialInsurance = "SELECT * FROM citizen_registrations.socialinsurances where id = ?";
-    private final String addSocialInsurance = "INSERT INTO citizen_registrations.socialinsurances(`year`,`month`,`amount`)"
-            + "VALUES(?,?,?);";
+    private final String addSocialInsurance = "INSERT INTO citizen_registrations.socialinsurances(`year`,`month`,`amount`,`person_id`)"
+            + "VALUES(?,?,?,?);";
     private final String removeInsurance = "DELETE FROM citizen_registrations.socialinsurances where id =?";
 
     public MySqlSocialInsuranceStorage(String _dbConnectionString, String _dbUsername, String _dbPassword) {
@@ -54,13 +55,14 @@ public class MySqlSocialInsuranceStorage implements SocialInsuranceStorage {
     }
 
     @Override
-    public int insertSocialInsurance(SocialInsuranceRecord socialInsurance) throws DALException {
+    public int insertSocialInsurance(SocialInsuranceRecord socialInsurance, int id) throws DALException {
 
         try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
                 PreparedStatement pstmt = conn.prepareStatement(addSocialInsurance)) {
             pstmt.setInt(1, socialInsurance.getYear());
             pstmt.setInt(2, socialInsurance.getMonth());
             pstmt.setDouble(3, socialInsurance.getAmount());
+            pstmt.setInt(4, id);
             pstmt.execute();
             try (ResultSet rs = pstmt.executeQuery("SELECT LAST_INSERT_ID()")) {
                 rs.next();
@@ -88,4 +90,23 @@ public class MySqlSocialInsuranceStorage implements SocialInsuranceStorage {
         }
     }
 
+    @Override
+    public void insertInsurances(Citizen person) throws DALException {
+        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
+                PreparedStatement pstmt = conn.prepareStatement(addSocialInsurance)) {
+            for (SocialInsuranceRecord insurance : person.getSocialInsuranceRecords()) {
+
+                pstmt.setInt(1, insurance.getYear());
+                pstmt.setInt(2, insurance.getMonth());
+                pstmt.setDouble(3, insurance.getAmount());
+                pstmt.setInt(4, person.getID());
+                pstmt.execute();
+
+            }
+
+        } catch (SQLException ex) {
+            throw new DALException("SQL failed \n" + ex.getSQLState() + "\n" + ex.getMessage() + "\n" + ex.getErrorCode(), ex);
+
+        }
+    }
 }

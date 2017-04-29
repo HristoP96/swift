@@ -5,31 +5,21 @@
  */
 package CitizenStorage;
 
-import AdressStorage.MySqlAddressStorage;
 import DALException.DALException;
-import address.Address;
 import education.Education;
-import education.EducationDegree;
-import education.GradedEducation;
-import education.HigherEducation;
-import education.PrimaryEducation;
-import education.SecondaryEducation;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.List;
 import personaldetails.Citizen;
 import personaldetails.Gender;
-import MySqlDataStorage.MySqlDataStorage.*;
 import static MySqlDataStorage.MySqlDataStorage.*;
 import insurance.SocialInsuranceRecord;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Stack;
+import java.util.LinkedList;
 
 /**
  *
@@ -40,7 +30,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
     private final String _dbConnectionString;
     private final String _dbUsername;
     private final String _dbPassword;
-
+    //08S01
     private final String getPerson = "SELECT * FROM citizen_registrations.people WHERE citizen_registrations.people.id =?";
 
     private final String insertEducationMatches = "INSERT INTO citizen_registrations.people_educations(`person_id`,`education_id`)"
@@ -48,7 +38,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
 
     private final String getEducationsStatement = "SELECT * FROM citizen_registrations.people_educations WHERE citizen_registrations.people_educations.person_id =?";
 
-    private static String getInsurancesStatement = "SELECT * FROM citizen_registrations.people_insurances WHERE citizen_registrations.people_insurances.person_id =?";
+    private final String getInsurancesStatement = "SELECT * FROM citizen_registrations.socialinsurances WHERE citizen_registrations.socialinsurances.person_id =?";
 
     private final String insertPerson = "INSERT INTO citizen_registrations.people (`first_name`,`middle_name`,`last_name`,`gender_id`,`height`,`dateOfBirth`,`addressID`)"
             + "VALUES (?, ?, ?, ?, ?, ?,?);";
@@ -61,12 +51,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
 
     private final String selectEducations = "SELECT education_id FROM citizen_registrations.people_educations WHERE person_id =?;";
 
-    private final String removeInsuranceMatches = "DELETE FROM citizen_registrations.people_insurances WHERE person_id=?";
-
-    private final String selectInsurances = "SELECT insurance_id FROM  citizen_registrations.people_insurances  WHERE person_id=?";
-
-    private final String insertInsuranceMatches = "INSERT INTO citizen_registrations.people_insurances(`person_id`,`insurance_id`)"
-            + "VALUES(?,?);";
+    private final String selectInsurances = "SELECT id FROM  citizen_registrations.socialinsurances WHERE person_id=?";
 
     public MySqlCitizenStorage(String dbConnectionString, String dbUsername, String dbPassword) {
         _dbConnectionString = dbConnectionString;
@@ -103,7 +88,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
                     citizen.addSocialInsuranceRecord(insurance);
 
                 }
-                
+
                 return citizen;
 
             }
@@ -141,7 +126,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    insurances.add(insuranceStorage.getSocialInsurance(rs.getInt("insurance_id")));
+                    insurances.add(insuranceStorage.getSocialInsurance(rs.getInt("id")));
                 }
                 return insurances;
             }
@@ -168,10 +153,11 @@ public class MySqlCitizenStorage implements CitizenStorage {
             pstmt.execute();
             try (ResultSet rs = pstmt.executeQuery("SELECT LAST_INSERT_ID()")) {
                 rs.next();
-
+                citizen.setID(rs.getInt(1));
                 if (!(citizen.getEducations().isEmpty())) {
-                    for (Education education : citizen.getEducations()) {
-                        try (PreparedStatement stmt = conn.prepareStatement((insertEducationMatches))) {
+
+                    try (PreparedStatement stmt = conn.prepareStatement((insertEducationMatches))) {
+                        for (Education education : citizen.getEducations()) {
                             stmt.setInt(1, rs.getInt(1));
                             stmt.setInt(2, educationStorage.insertEducation(education));
                             stmt.execute();
@@ -179,15 +165,9 @@ public class MySqlCitizenStorage implements CitizenStorage {
 
                     }
                 }
-                if (!(citizen.getSocialInsuranceRecords().isEmpty())) {
-                    for (SocialInsuranceRecord insurance : citizen.getSocialInsuranceRecords()) {
-                        try (PreparedStatement stmt = conn.prepareStatement(insertInsuranceMatches)) {
-                            stmt.setInt(1, rs.getInt(1));
-                            stmt.setInt(2, insuranceStorage.insertSocialInsurance(insurance));
-                            stmt.execute();
-                        }
-                    }
-                }
+                if(!(citizen.getSocialInsuranceRecords().isEmpty())){
+                insuranceStorage.insertInsurances(citizen);
+            }
                 return rs.getInt(1);
             }
 
@@ -248,27 +228,17 @@ public class MySqlCitizenStorage implements CitizenStorage {
         }
     }
 
-    private void removeInsuranceMatches(int id) throws SQLException {
-        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
-                PreparedStatement pstmt = conn.prepareStatement(removeInsuranceMatches)) {
-            pstmt.setInt(1, id);
-            pstmt.execute();
-
-        }
-    }
-
     private void removeInsurances(int id) throws SQLException {
         try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
                 PreparedStatement pstmt = conn.prepareStatement(selectInsurances)) {
             pstmt.setInt(1, id);
-
             try (ResultSet rs = pstmt.executeQuery()) {
-                removeInsuranceMatches(id);
                 while (rs.next()) {
-                    insuranceStorage.removeSocialInsurance(rs.getInt("insurance_id"));
+                    insuranceStorage.removeSocialInsurance(rs.getInt("id"));
                 }
             }
 
         }
     }
+
 }

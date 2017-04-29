@@ -18,6 +18,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 
 /**
  *
@@ -68,7 +69,7 @@ public class MySqlEducationStorage implements EducationStorage {
             }
 
         } catch (SQLException ex) {
-            throw new DALException("SQL failed \n"+ex.getSQLState() + "\n" + ex.getMessage() + "\n" + ex.getErrorCode(), ex);
+            throw new DALException("SQL failed \n" + ex.getSQLState() + "\n" + ex.getMessage() + "\n" + ex.getErrorCode(), ex);
 
         }
     }
@@ -81,11 +82,16 @@ public class MySqlEducationStorage implements EducationStorage {
             pstmt.setString(2, education.getInstitutionName());
             pstmt.setDate(3, Date.valueOf(education.getEnrollmentDate()));
             pstmt.setDate(4, Date.valueOf(education.getGraduationDate()));
-            pstmt.setBoolean(5, education.isGraduated());
-            if (education instanceof GradedEducation) {
-
+            
+            if ((education instanceof GradedEducation )&& education.isGraduated()) {
+                pstmt.setBoolean(5,education.isGraduated());
                 pstmt.setDouble(6, ((GradedEducation) education).getFinalGrade());
+            }else{
+                pstmt.setNull(5, java.sql.Types.INTEGER);
+                pstmt.setNull(6, java.sql.Types.INTEGER);
             }
+                
+            
             pstmt.execute();
             try (ResultSet rs = pstmt.executeQuery("SELECT LAST_INSERT_ID()")) {
                 rs.next();
@@ -93,7 +99,7 @@ public class MySqlEducationStorage implements EducationStorage {
             }
 
         } catch (SQLException ex) {
-            throw new DALException("SQL failed \n"+ex.getSQLState() + "%n" + ex.getMessage() + "%n" + ex.getErrorCode(), ex);
+            throw new DALException("SQL failed \n" + ex.getSQLState() + "%n" + ex.getMessage() + "%n" + ex.getErrorCode(), ex);
 
         }
     }
@@ -105,10 +111,10 @@ public class MySqlEducationStorage implements EducationStorage {
             pstmt.setInt(1, id);
             pstmt.execute();
 
-            System.out.printf("The Education-List for Person with ID-%d is now empty\n", id);
+           
 
         } catch (SQLException ex) {
-            throw new DALException("SQL failed \n"+ex.getSQLState() + "\n" + ex.getMessage() + "\n" + ex.getErrorCode(), ex);
+            throw new DALException("SQL failed \n" + ex.getSQLState() + "\n" + ex.getMessage() + "\n" + ex.getErrorCode(), ex);
 
         }
 
