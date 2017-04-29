@@ -273,16 +273,23 @@ public class CitizenStorageManagerCLI {
                     education = new PrimaryEducation(split[i + 1],
                             LocalDate.parse(split[i + 2], format),
                             LocalDate.parse(split[i + 3], format));
+                    if (!(education.getGraduationDate().isAfter(LocalDate.now()))) {
+                        education.gotGraduated();
+
+                    }
                     person.addEducation(education);
                     break;
                 case "S":
                     education = new SecondaryEducation(split[i + 1],
                             LocalDate.parse(split[i + 2], format),
                             LocalDate.parse(split[i + 3], format));
-                    if (!(LocalDate.parse(split[i + 3], format).isAfter(LocalDate.now()))) {
+                    if (!(education.getGraduationDate().isAfter(LocalDate.now()))) {
+
                         ((GradedEducation) education).gotGraduated(Float.parseFloat(split[i + 4]));
+                        
                     }
-                    person.addEducation(education);
+                    person.addEducation(((GradedEducation) education));
+
                     break;
                 case "M":
                     education = new HigherEducation(split[i + 1],
@@ -292,7 +299,7 @@ public class CitizenStorageManagerCLI {
                     if (!(LocalDate.parse(split[i + 3], format).isAfter(LocalDate.now()))) {
                         ((GradedEducation) education).gotGraduated(Float.parseFloat(split[i + 4]));
                     }
-                    person.addEducation(education);
+                    person.addEducation(((GradedEducation) education));
                     break;
                 case "B":
                     education = new HigherEducation(split[i + 1],
@@ -303,7 +310,7 @@ public class CitizenStorageManagerCLI {
                         ((GradedEducation) education).gotGraduated(Float.parseFloat(split[i + 4]));
                     }
 
-                    person.addEducation(education);
+                    person.addEducation(((GradedEducation) education));
                     break;
                 case "D":
                     education = new HigherEducation(split[i + 1],
@@ -313,7 +320,7 @@ public class CitizenStorageManagerCLI {
                     if (!(LocalDate.parse(split[i + 3], format).isAfter(LocalDate.now()))) {
                         ((GradedEducation) education).gotGraduated(Float.parseFloat(split[i + 4]));
                     }
-                    person.addEducation(education);
+                    person.addEducation(((GradedEducation) education));
                     break;
 
             }
