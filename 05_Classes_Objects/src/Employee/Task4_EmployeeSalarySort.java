@@ -1,10 +1,10 @@
+package Employee;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package pkg05_classes_objects;
-
 import java.util.Scanner;
 
 /**
@@ -31,14 +31,27 @@ public class Task4_EmployeeSalarySort {
             double salary = Double.parseDouble(split[1].trim());
             String position = split[2].trim();
             String department = split[3].trim();
+            String email = "";
+            int age = -1;
 
             switch (split.length) {
                 case 4:
                     employees[i] = new Employee(name, salary, position, department);
                     break;
+                case 5:
+                    try {
+                        age = Integer.parseInt(split[4].trim());
+                            
+                        employees[i] = new Employee(name, salary, position, department, age);
+
+                    } catch (NumberFormatException ex) {
+                        email = split[4].trim();
+                        employees[i] = new Employee(name, salary, position, department, email);
+                    }
+                    break;
                 case 6:
-                    int age = Integer.parseInt(split[4].trim());
-                    String email = split[n - 1].trim();
+                    age = Integer.parseInt(split[4].trim());
+                    email = split[5].trim();
                     employees[i] = new Employee(name, salary, position, department, age, email);
                     break;
                 default:
@@ -50,28 +63,23 @@ public class Task4_EmployeeSalarySort {
         for (int j = 0; j < 3; j++) {
             double max = 0;
             int idx = 0;
+            String result = "";
             for (int k = 0; k < n; k++) {
                 if ((employees[k] != null) && (max < employees[k].salary)) {
                     max = employees[k].salary;
+                    result = employees[k].toString();
                     idx = k;
                 }
-            }
-                if (employees[idx].email == null) {
-
-                    System.out.println(employees[idx].name + " " + employees[idx].department + " " + employees[idx].position + " " + employees[idx].email);
-                } else {
-                    System.out.println(employees[idx].name + " " + employees[idx].department + " " + employees[idx].position);
-                }
-
-                employees[idx] = null;
-                System.out.println();
 
             }
-        
-        //задачата е направена с помощ от отговорите ,защото не знаех как точно  трябва да я направя , но сега вече са ми доста изясни нещата.
+
+            System.out.println(result);
+            employees[idx] = null;
+
+            System.out.println();
 
         }
 
     }
 
-
+}

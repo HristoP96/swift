@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package pkg05_classes_objects;
+package VehicleMonitor;
 
 /**
  *
@@ -19,10 +19,9 @@ public class Vehicle {
     int distance;
     int weight;
     String color;
-
-    Vehicle() {
-       
-    }
+    public static double fuelPrice;
+    
+    
    
     
     public Vehicle(String type,String model,int power,double Consumption,int year,int distance,int weight,String color)
@@ -34,7 +33,6 @@ public class Vehicle {
         this.fuelConsumption = Consumption;
         this.yearProduced = year;
         this.distance=distance;
-        
         this.weight = weight;
         this.color = color;
         
@@ -82,6 +80,12 @@ public class Vehicle {
            
            return (0.16 * this.power)* (1.25*carAge)*(0.05*this.fuelConsumption)*typeCoefficient;
            
+     }
+     
+    @Override
+     public String toString(){
+         return String.format("%s, %d, %s\n Insurance cost: %.2f - Travel cost: %.2f ",  this.model, this.yearProduced , this.color ,
+                  this.getInsurancePrice(), this.calculateTripPrice(fuelPrice, this.distance));
      }
     
 }
