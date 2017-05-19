@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Task1_CalculatorClient;
+package Calculator;
 import java.util.Scanner;
 
 /**
@@ -16,7 +16,7 @@ public class Task1_CalculatorClient {
         Scanner sc =  new Scanner (System.in);
         
         String command;
-        Calculator client = new Calculator();
+       
         
         do 
         {
@@ -33,19 +33,19 @@ public class Task1_CalculatorClient {
             switch (command)
             {
                 case "SUM":
-                    System.out.printf("%.3f",client.sum(a, b));
+                    System.out.printf("%.3f",Calculator.sum(a, b));
                     break;
                 case "MUL":
-                    System.out.printf("%.3f",client.multiply(a, b));
+                    System.out.printf("%.3f",Calculator.multiply(a, b));
                     break;
                 case "SUB":
-                    System.out.printf("%.3f",client.subtract(a, b));
+                    System.out.printf("%.3f",Calculator.subtract(a, b));
                     break;
                 case "DIV":
-                    System.out.printf("%.3f",client.divide(a, b));
+                    System.out.printf("%.3f",Calculator.divide(a, b));
                     break;
                 case "PER":
-                    System.out.printf("%.3f",client.percenage(a, b));
+                    System.out.printf("%.3f",Calculator.percenage(a, b));
                     break;
             }
             System.out.println();

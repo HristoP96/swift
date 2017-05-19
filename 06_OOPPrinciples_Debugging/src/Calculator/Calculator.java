@@ -3,32 +3,32 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Task1_CalculatorClient;
+package Calculator;
 
 /**
  *
  * @author ickoto
  */
-public class Calculator {
+public final class Calculator {
 
-    public  double sum(double a, double b) {
+    public static double sum(double a, double b) {
         return a + b;
     }
 
-    public  double subtract(double a, double b) {
+    public static double subtract(double a, double b) {
         return a - b;
     }
 
-    public  double multiply(double a, double b) {
+    public static double multiply(double a, double b) {
         return a * b;
     }
 
-    public  double divide(double a, double b) {
+    public static double divide(double a, double b) {
         return a / b;
     }
 
-    public  double percenage(double a, double b) {
-        return a*(b/100);
+    public static double percenage(double a, double b) {
+        return a * (b / 100);
     }
 
 }
