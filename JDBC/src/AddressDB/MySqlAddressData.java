@@ -1,41 +1,31 @@
-/*
- * To change this license header, choose License Headps in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package Task2_AddressDB;
+package AddressDB;
 
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
-/**
- *
- * @author ickoto
- */
+
 public class MySqlAddressData {
     
-    protected static String url = "";
+    private final  String url;
     
-    static void setUrl(String urlSet) {
-        url = urlSet;
-    }
-    protected static String userName = "";
+    private final String userName;
     
-    static void setUserName(String name) {
-        userName = name;
-    }
-    protected static String password = "";
     
-    static void setPass(String pass) {
-        password = pass;
+    private final String password;
+
+    public MySqlAddressData(String DBMS_CONN_STRING, String DBMS_USERNAME, String DBMS_PASSWORD) {
+        this.url = DBMS_CONN_STRING;
+        this.userName = DBMS_USERNAME;
+        this.password = DBMS_PASSWORD;
     }
     
-    static void getFullAddress(int id) throws SQLException {
+    
+    
+    
+    public void getFullAddress(int id) throws SQLException {
         
         
         try (Connection con = DriverManager.getConnection(url, userName, password);
@@ -84,7 +74,7 @@ public class MySqlAddressData {
         }
     }
     
-    static void addAddress(int id, int street_id, int number, int apartment) {
+    public void addAddress(int id, int street_id, int number, int apartment) {
        
         
         try (Connection con = DriverManager.getConnection(url, userName, password);
@@ -109,7 +99,7 @@ public class MySqlAddressData {
         }
     }
     
-    static void getAddresses(String municipalityName) {
+    public void getAddresses(String municipalityName) {
         
         
         try (Connection con = DriverManager.getConnection(url, userName, password);

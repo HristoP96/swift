@@ -1,44 +1,29 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package Task1_School;
+
+
+package School;
 
 import java.sql.Connection;
 import java.sql.Date;
-import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
-/**
- *
- * @author ickoto
- */
 public class MySqlSchoolData {
 
-    protected static String url = "";
+    private final String url;
 
-    static void setUrl(String urlSet) {
-        url = urlSet;
-    }
-    protected static String userName = "";
+    private final String userName;
 
-    static void setUserName(String name) {
-        userName = name;
-    }
-    protected static String password = "";
+    private final String password;
 
-    static void setPass(String pass) {
-        password = pass;
+    public MySqlSchoolData(String DBMS_CONN_STRING, String DBMS_USERNAME, String DBMS_PASSWORD) {
+        url = DBMS_CONN_STRING;
+        userName = DBMS_USERNAME;
+        password = DBMS_PASSWORD;
     }
 
-    static void insertTeacher(int teacher_id, String teacher_name, String teacher_email, double teacher_salary) throws SQLException {
-
-       
+    public void insertTeacher(int teacher_id, String teacher_name, String teacher_email, double teacher_salary)  {
 
         try (Connection con = DriverManager.getConnection(url, userName, password);
                 PreparedStatement pstmt = con.prepareStatement("INSERT INTO teachers(id,name,email,salary)"
@@ -48,7 +33,6 @@ public class MySqlSchoolData {
             pstmt.setString(3, teacher_email);
             pstmt.setDouble(4, teacher_salary);
             pstmt.execute();
-           
 
         } catch (SQLException ex) {
             while (ex != null) {
@@ -61,8 +45,7 @@ public class MySqlSchoolData {
         }
     }
 
-    static void insertStudent(int student_id, String student_name, Date student_enrollment_date) throws SQLException {
-        
+    public void insertStudent(int student_id, String student_name, Date student_enrollment_date) {
 
         try (Connection con = DriverManager.getConnection(url, userName, password);
                 PreparedStatement pstmt = con.prepareStatement("INSERT INTO students(id,name,enrollment_date)"
@@ -72,7 +55,6 @@ public class MySqlSchoolData {
             pstmt.setString(2, student_name);
             pstmt.setDate(3, student_enrollment_date);
             pstmt.execute();
-            
 
         } catch (SQLException ex) {
             while (ex != null) {
@@ -86,8 +68,8 @@ public class MySqlSchoolData {
 
     }
 
-    static void getTeacher(int teacher_id) {
-        
+    public void getTeacher(int teacher_id) {
+
         try (Connection con = DriverManager.getConnection(url, userName, password);
                 PreparedStatement pstmt = con.prepareStatement("Select * from teachers where id=?")) {
             pstmt.setInt(1, teacher_id);
@@ -100,7 +82,7 @@ public class MySqlSchoolData {
                             rs.getString("email"));
                     System.out.println();
                 }
-                
+
             }
 
         } catch (SQLException ex) {
@@ -114,8 +96,8 @@ public class MySqlSchoolData {
         }
     }
 
-    static void getStudent(int student_id) {
-       
+    public void getStudent(int student_id) {
+
         try (Connection con = DriverManager.getConnection(url, userName, password);
                 PreparedStatement pstmt = con.prepareStatement("Select * from students where id=?")) {
             pstmt.setInt(1, student_id);
@@ -128,7 +110,7 @@ public class MySqlSchoolData {
                             rs.getDate("enrollment_date"));
                     System.out.println();
                 }
-                
+
             }
 
         } catch (SQLException ex) {
@@ -142,8 +124,8 @@ public class MySqlSchoolData {
         }
     }
 
-    static void getTeachers(double min, double max) {
-        
+    public void getTeachers(double min, double max) {
+
         try (Connection con = DriverManager.getConnection(url, userName, password);
                 PreparedStatement pstmt = con.prepareStatement("Select * from teachers where salary>=? and salary<=?")) {
             pstmt.setDouble(1, min);
@@ -156,7 +138,7 @@ public class MySqlSchoolData {
                             rs.getDouble("salary"));
                     System.out.println();
                 }
-                
+
             }
 
         } catch (SQLException ex) {
@@ -170,8 +152,8 @@ public class MySqlSchoolData {
         }
     }
 
-    static void getStudents(Date boundary) {
-        
+    public void getStudents(Date boundary) {
+
         try (Connection con = DriverManager.getConnection(url, userName, password);
                 PreparedStatement pstmt = con.prepareStatement("Select * from students where enrollment_date>=?")) {
             pstmt.setDate(1, boundary);
@@ -183,7 +165,7 @@ public class MySqlSchoolData {
                             rs.getDate("enrollment_date"));
                     System.out.println();
                 }
-                
+
             }
         } catch (SQLException ex) {
             while (ex != null) {
@@ -196,8 +178,8 @@ public class MySqlSchoolData {
         }
     }
 
-    static void getDisciplinesByTeacherId(int teacher_id) {
-        
+    public void getDisciplinesByTeacherId(int teacher_id) {
+
         try (Connection con = DriverManager.getConnection(url, userName, password);
                 PreparedStatement pstmt = con.prepareStatement("Select disciplines.name from school.disciplines"
                         + " JOIN  school.disciplines_taught"
@@ -211,7 +193,7 @@ public class MySqlSchoolData {
                     System.out.printf("%s", rs.getString("name"));
                     System.out.println();
                 }
-               
+
             }
 
         } catch (SQLException ex) {
@@ -225,8 +207,8 @@ public class MySqlSchoolData {
         }
     }
 
-    static void getTeachersByDisciplineName(String discipline_name) {
-       
+    public void getTeachersByDisciplineName(String discipline_name) {
+
         try (Connection con = DriverManager.getConnection(url, userName, password);
                 PreparedStatement pstmt = con.prepareStatement("Select school.teachers.name"
                         + " from school.disciplines_taught"
@@ -237,13 +219,13 @@ public class MySqlSchoolData {
                         + " WHERE disciplines.name=?")) {
             pstmt.setString(1, discipline_name);
             pstmt.execute();
-            
+
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     System.out.printf("%s", rs.getString("name"));
                     System.out.println();
                 }
-                
+
             }
 
         } catch (SQLException ex) {

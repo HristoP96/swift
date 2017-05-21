@@ -1,40 +1,27 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package Task2_AddressDB;
+
+package AddressDB;
 
 import java.sql.SQLException;
 import java.util.Scanner;
 
-/**
- *
- * @author ickoto
- */
-public class Task2_AddressDB extends MySqlAddressData {
+public class Task2_AddressDB  {
 
     public static void main(String[] args) throws SQLException {
         Scanner sc = new Scanner(System.in);
         final String DBMS_CONN_STRING = "jdbc:mysql://localhost:3306/addressdb";
-        setUrl(DBMS_CONN_STRING);
         final String DBMS_USERNAME = "root";
-        setUserName(DBMS_USERNAME);
-        System.out.println("Set password: ");
-        final String DBMS_PASSWORD = sc.next();
-        setPass(DBMS_PASSWORD);
-        System.out.println(url);
-        System.out.println(userName);
-        System.out.println(password);
-
-        System.out.println("Set command:");
+        final String DBMS_PASSWORD = "ickotomf56";
+        
+        MySqlAddressData storage = new MySqlAddressData(DBMS_CONN_STRING, DBMS_USERNAME, DBMS_PASSWORD);
+        
+         System.out.println("Set command:");
         String command = sc.next();
 
         switch (command) {
             case "GETAD":
                 System.out.println("Address ID:");
                 int add_id = sc.nextInt();
-                getFullAddress(add_id);
+                storage.getFullAddress(add_id);
                 break;
             case "ADDAD":
                 System.out.println("NewID:");
@@ -46,14 +33,14 @@ public class Task2_AddressDB extends MySqlAddressData {
                 System.out.println("Apartment");
                 int apart = sc.nextInt();
 
-                addAddress(newID, str_id, number, apart);
+                storage.addAddress(newID, str_id, number, apart);
                 break;
             case "GETADS":
                 sc.nextLine();
                 System.out.println("Municipality Name:");
                 String m_name = sc.nextLine();
 
-                getAddresses(m_name);
+                storage.getAddresses(m_name);
                 break;
 
         }
