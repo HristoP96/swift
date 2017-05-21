@@ -1,4 +1,3 @@
-
 package EducationStorage;
 
 import DALException.DALException;
@@ -14,6 +13,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MySqlEducationStorage implements EducationStorage {
 
@@ -24,6 +25,12 @@ public class MySqlEducationStorage implements EducationStorage {
     private final String insertStatement = "INSERT INTO citizen_registrations.educations (`type_id`,`institution_name`,`enrollment_date`,`graduation_date`,`graduated`,`final_grad`)"
             + "VALUES (?, ?, ?, ?, ?, ?);";
     private final String removeStatement = "DELETE FROM citizen_registrations.educations where id =?";
+
+    private final String selectEducations = "SELECT education_id FROM citizen_registrations.people_educations WHERE person_id =?;";
+
+    private final String removeEducationMatches = "DELETE FROM citizen_registrations.people_educations WHERE person_id=?";
+
+    private final String getEducationsStatement = "SELECT * FROM citizen_registrations.people_educations WHERE citizen_registrations.people_educations.person_id =?";
 
     public MySqlEducationStorage(String DB_CONN_STRING, String DB_USERNAME, String DB_PASSWORD) {
         this._dbConnectionString = DB_CONN_STRING;
@@ -54,7 +61,7 @@ public class MySqlEducationStorage implements EducationStorage {
                                 rs.getDate("enrollment_date").toLocalDate(),
                                 rs.getDate("graduation_date").toLocalDate());
                         Float check = rs.getFloat("final_grad");
-                        if (!(check == null || (check<2 ||  check>6))) {
+                        if (!(check == null || (check < 2 || check > 6))) {
                             ((GradedEducation) education).gotGraduated(check);
                             return ((GradedEducation) education);
                         }
@@ -127,6 +134,57 @@ public class MySqlEducationStorage implements EducationStorage {
 
         }
 
+    }
+
+    @Override
+    public void removeEducations(int id) throws DALException {
+        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
+                PreparedStatement pstmt = conn.prepareStatement(selectEducations)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                removeEducationMatches(id);
+                while (rs.next()) {
+                    this.removeEducation(rs.getInt("education_id"));
+                }
+            }
+        } catch (SQLException ex) {
+            throw new DALException("SQL failed \n" + ex.getSQLState() + "%n" + ex.getMessage() + "%n" + ex.getErrorCode(), ex);
+
+        }
+    }
+
+    @Override
+    public void removeEducationMatches(int id) throws DALException {
+        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
+                PreparedStatement pstmt = conn.prepareStatement(removeEducationMatches)) {
+            pstmt.setInt(1, id);
+            pstmt.execute();
+        } catch (SQLException ex) {
+            throw new DALException("SQL failed \n" + ex.getSQLState() + "%n" + ex.getMessage() + "%n" + ex.getErrorCode(), ex);
+
+        }
+
+    }
+
+    @Override
+    public List<Education> getEducations(int id) throws DALException {
+        List<Education> educations = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
+                PreparedStatement pstmt = conn.prepareStatement(getEducationsStatement)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    educations.add(this.getEducation(rs.getInt("education_id")));
+
+                }
+                return educations;
+            }
+        } catch (SQLException ex) {
+            throw new DALException("SQL failed \n" + ex.getSQLState() + "\t" + ex.getMessage() + "\t" + ex.getErrorCode(), ex);
+
+        }
     }
 
 }

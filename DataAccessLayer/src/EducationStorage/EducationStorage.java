@@ -1,23 +1,21 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package EducationStorage;
 
 import DALException.DALException;
 import education.Education;
+import java.util.List;
 
-/**
- *
- * @author ickoto
- */
 public interface EducationStorage {
 
     public Education getEducation(int id) throws DALException;
 
     public int insertEducation(Education education) throws DALException;
-    
+
     public void removeEducation(int id) throws DALException;
+
+    public void removeEducations(int id) throws DALException;
+
+    public void removeEducationMatches(int id) throws DALException;
+
+    public List<Education> getEducations(int id) throws DALException;
 
 }

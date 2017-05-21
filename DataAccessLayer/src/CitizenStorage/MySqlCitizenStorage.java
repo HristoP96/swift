@@ -22,14 +22,11 @@ public class MySqlCitizenStorage implements CitizenStorage {
     private final String _dbConnectionString;
     private final String _dbUsername;
     private final String _dbPassword;
+    
     private final String getPerson = "SELECT * FROM citizen_registrations.people WHERE citizen_registrations.people.id =?";
 
     private final String insertEducationMatches = "INSERT INTO citizen_registrations.people_educations(`person_id`,`education_id`)"
             + "VALUES(?,?);";
-
-    private final String getEducationsStatement = "SELECT * FROM citizen_registrations.people_educations WHERE citizen_registrations.people_educations.person_id =?";
-
-    private final String getInsurancesStatement = "SELECT * FROM citizen_registrations.socialinsurances WHERE citizen_registrations.socialinsurances.person_id =?";
 
     private final String insertPerson = "INSERT INTO citizen_registrations.people (`first_name`,`middle_name`,`last_name`,`gender_id`,`height`,`dateOfBirth`,`addressID`)"
             + "VALUES (?, ?, ?, ?, ?, ?,?);";
@@ -38,39 +35,28 @@ public class MySqlCitizenStorage implements CitizenStorage {
 
     private final String removeCitizen = "DELETE FROM citizen_registrations.people WHERE id =?";
 
-    private final String removeEducationMatches = "DELETE FROM citizen_registrations.people_educations WHERE person_id=?";
 
-    private final String selectEducations = "SELECT education_id FROM citizen_registrations.people_educations WHERE person_id =?;";
-
-    private final String selectInsurances = "SELECT id FROM  citizen_registrations.socialinsurances WHERE person_id=?";
-    private MySqlAddressStorage _addressStorage;
-    private MySqlEducationStorage _educationStorage;
-    private MySqlSocialInsuranceStorage _insuranceStorage;
-    
-
-    
+    private final MySqlAddressStorage _addressStorage;
+    private final MySqlEducationStorage _educationStorage;
+    private final MySqlSocialInsuranceStorage _insuranceStorage;
 
     public MySqlCitizenStorage(String DB_CONN_STRING, String DB_USERNAME, String DB_PASSWORD) {
         this._dbConnectionString = DB_CONN_STRING;
         this._dbUsername = DB_USERNAME;
         this._dbPassword = DB_PASSWORD;
-         _addressStorage = new MySqlAddressStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
-         _educationStorage = new MySqlEducationStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
-         _insuranceStorage = new MySqlSocialInsuranceStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
-         
+        _addressStorage = new MySqlAddressStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
+        _educationStorage = new MySqlEducationStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
+        _insuranceStorage = new MySqlSocialInsuranceStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
 
     }
-
-    
-    
 
     @Override
     public Citizen getCitizen(int id) throws DALException {
         Citizen citizen = null;
         List<SocialInsuranceRecord> insurances = new ArrayList<>();
-        insurances = getInsurances(id);
+        insurances = _insuranceStorage.getInsurances(id);
         List<Education> educations = new ArrayList<>();
-        educations = getEducations(id);
+        educations = _educationStorage.getEducations(id);
         try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
                 PreparedStatement pstmt = conn.prepareStatement(getPerson)) {
             pstmt.setInt(1, id);
@@ -104,44 +90,9 @@ public class MySqlCitizenStorage implements CitizenStorage {
         }
     }
 
-    @Override
-    public List<Education> getEducations(int id) throws DALException {
-        List<Education> educations = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
-                PreparedStatement pstmt = conn.prepareStatement(getEducationsStatement)) {
-            pstmt.setInt(1, id);
+   
 
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    educations.add(_educationStorage.getEducation(rs.getInt("education_id")));
-
-                }
-                return educations;
-            }
-        } catch (SQLException ex) {
-            throw new DALException("SQL failed \n" + ex.getSQLState() + "\t" + ex.getMessage() + "\t" + ex.getErrorCode(), ex);
-
-        }
-    }
-
-    @Override
-    public List<SocialInsuranceRecord> getInsurances(int id) throws DALException {
-        List<SocialInsuranceRecord> insurances = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
-                PreparedStatement stmt = conn.prepareStatement(getInsurancesStatement)) {
-            stmt.setInt(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    insurances.add(_insuranceStorage.getSocialInsurance(rs.getInt("id")));
-                }
-                return insurances;
-            }
-
-        } catch (SQLException ex) {
-            throw new DALException("SQL failed \n" + ex.getSQLState() + "\t" + ex.getMessage() + "\t" + ex.getErrorCode(), ex);
-
-        }
-    }
+    
 
     @Override
     public int insertCitizen(Citizen citizen) throws DALException {
@@ -191,8 +142,8 @@ public class MySqlCitizenStorage implements CitizenStorage {
                 PreparedStatement pstmt = conn.prepareStatement(removeCitizen)) {
             pstmt.setInt(1, id);
 
-            removeEducations(id);
-            removeInsurances(id);
+            _educationStorage.removeEducations(id);
+            _insuranceStorage.removeInsurances(id);
             int AdressID;
 
             try (PreparedStatement stmt = conn.prepareStatement(selectAddress)) {
@@ -205,7 +156,6 @@ public class MySqlCitizenStorage implements CitizenStorage {
             }
             pstmt.execute();
             _addressStorage.removeAdress(AdressID);
-            System.out.printf("The Citizen with ID-%d was removed", id);
 
         } catch (SQLException ex) {
             throw new DALException("SQL failed \n" + ex.getSQLState() + "%n" + ex.getMessage() + "%n" + ex.getErrorCode(), ex);
@@ -213,42 +163,8 @@ public class MySqlCitizenStorage implements CitizenStorage {
         }
     }
 
-    private void removeEducationMatches(int id) throws SQLException {
-        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
-                PreparedStatement pstmt = conn.prepareStatement(removeEducationMatches)) {
-            pstmt.setInt(1, id);
-            pstmt.execute();
-        }
+   
 
-    }
-
-    private void removeEducations(int id) throws SQLException {
-        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
-                PreparedStatement pstmt = conn.prepareStatement(selectEducations)) {
-            pstmt.setInt(1, id);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                removeEducationMatches(id);
-                while (rs.next()) {
-                    _educationStorage.removeEducation(rs.getInt("education_id"));
-                }
-            }
-        }
-    }
-
-    private void removeInsurances(int id) throws SQLException {
-        try (Connection conn = DriverManager.getConnection(_dbConnectionString, _dbUsername, _dbPassword);
-                PreparedStatement pstmt = conn.prepareStatement(selectInsurances)) {
-            pstmt.setInt(1, id);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    _insuranceStorage.removeSocialInsurance(rs.getInt("id"));
-                }
-            }
-
-        }
-    }
-    
     
 
 }
