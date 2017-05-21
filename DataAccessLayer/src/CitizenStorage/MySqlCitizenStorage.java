@@ -1,11 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package CitizenStorage;
 
+import AdressStorage.MySqlAddressStorage;
 import DALException.DALException;
+import EducationStorage.MySqlEducationStorage;
 import education.Education;
 import java.sql.Connection;
 import java.sql.Date;
@@ -16,22 +13,15 @@ import java.sql.SQLException;
 import java.util.List;
 import personaldetails.Citizen;
 import personaldetails.Gender;
-import static MySqlDataStorage.MySqlDataStorage.*;
-import education.GradedEducation;
+import SocialInsuranceStorage.MySqlSocialInsuranceStorage;
 import insurance.SocialInsuranceRecord;
 import java.util.ArrayList;
-import java.util.LinkedList;
 
-/**
- *
- * @author ickoto
- */
 public class MySqlCitizenStorage implements CitizenStorage {
 
     private final String _dbConnectionString;
     private final String _dbUsername;
     private final String _dbPassword;
-    //08S01
     private final String getPerson = "SELECT * FROM citizen_registrations.people WHERE citizen_registrations.people.id =?";
 
     private final String insertEducationMatches = "INSERT INTO citizen_registrations.people_educations(`person_id`,`education_id`)"
@@ -53,12 +43,26 @@ public class MySqlCitizenStorage implements CitizenStorage {
     private final String selectEducations = "SELECT education_id FROM citizen_registrations.people_educations WHERE person_id =?;";
 
     private final String selectInsurances = "SELECT id FROM  citizen_registrations.socialinsurances WHERE person_id=?";
+    private MySqlAddressStorage _addressStorage;
+    private MySqlEducationStorage _educationStorage;
+    private MySqlSocialInsuranceStorage _insuranceStorage;
+    
 
-    public MySqlCitizenStorage(String dbConnectionString, String dbUsername, String dbPassword) {
-        _dbConnectionString = dbConnectionString;
-        _dbUsername = dbUsername;
-        _dbPassword = dbPassword;
+    
+
+    public MySqlCitizenStorage(String DB_CONN_STRING, String DB_USERNAME, String DB_PASSWORD) {
+        this._dbConnectionString = DB_CONN_STRING;
+        this._dbUsername = DB_USERNAME;
+        this._dbPassword = DB_PASSWORD;
+         _addressStorage = new MySqlAddressStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
+         _educationStorage = new MySqlEducationStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
+         _insuranceStorage = new MySqlSocialInsuranceStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
+         
+
     }
+
+    
+    
 
     @Override
     public Citizen getCitizen(int id) throws DALException {
@@ -81,7 +85,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
                         rs.getInt("height"),
                         rs.getDate("dateOfBirth").toLocalDate());
 
-                citizen.setAddress(addressStorage.getAddress(rs.getInt("addressID")));
+                citizen.setAddress(_addressStorage.getAddress(rs.getInt("addressID")));
                 for (Education education : educations) {
 
                     citizen.addEducation(education);
@@ -109,7 +113,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    educations.add(educationStorage.getEducation(rs.getInt("education_id")));
+                    educations.add(_educationStorage.getEducation(rs.getInt("education_id")));
 
                 }
                 return educations;
@@ -128,7 +132,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    insurances.add(insuranceStorage.getSocialInsurance(rs.getInt("id")));
+                    insurances.add(_insuranceStorage.getSocialInsurance(rs.getInt("id")));
                 }
                 return insurances;
             }
@@ -151,7 +155,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
             pstmt.setInt(4, citizen.getGender().ordinal());
             pstmt.setInt(5, citizen.getHeight());
             pstmt.setDate(6, Date.valueOf(citizen.getDateOfBirth()));
-            pstmt.setInt(7, addressStorage.insertAddress(citizen.getAddress()));
+            pstmt.setInt(7, _addressStorage.insertAddress(citizen.getAddress()));
             pstmt.execute();
             try (ResultSet rs = pstmt.executeQuery("SELECT LAST_INSERT_ID()")) {
                 rs.next();
@@ -162,7 +166,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
                         for (Education education : citizen.getEducations()) {
                             stmt.setInt(1, rs.getInt(1));
 
-                            stmt.setInt(2, educationStorage.insertEducation(education));
+                            stmt.setInt(2, _educationStorage.insertEducation(education));
 
                             stmt.execute();
                         }
@@ -170,7 +174,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
                     }
                 }
                 if (!(citizen.getSocialInsuranceRecords().isEmpty())) {
-                    insuranceStorage.insertInsurances(citizen);
+                    _insuranceStorage.insertInsurances(citizen);
                 }
                 return rs.getInt(1);
             }
@@ -200,7 +204,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
 
             }
             pstmt.execute();
-            addressStorage.removeAdress(AdressID);
+            _addressStorage.removeAdress(AdressID);
             System.out.printf("The Citizen with ID-%d was removed", id);
 
         } catch (SQLException ex) {
@@ -226,7 +230,7 @@ public class MySqlCitizenStorage implements CitizenStorage {
             try (ResultSet rs = pstmt.executeQuery()) {
                 removeEducationMatches(id);
                 while (rs.next()) {
-                    educationStorage.removeEducation(rs.getInt("education_id"));
+                    _educationStorage.removeEducation(rs.getInt("education_id"));
                 }
             }
         }
@@ -238,11 +242,13 @@ public class MySqlCitizenStorage implements CitizenStorage {
             pstmt.setInt(1, id);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    insuranceStorage.removeSocialInsurance(rs.getInt("id"));
+                    _insuranceStorage.removeSocialInsurance(rs.getInt("id"));
                 }
             }
 
         }
     }
+    
+    
 
 }

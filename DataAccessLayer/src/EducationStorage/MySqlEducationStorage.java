@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package EducationStorage;
 
 import DALException.DALException;
@@ -18,12 +14,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 
-/**
- *
- * @author ickoto
- */
 public class MySqlEducationStorage implements EducationStorage {
 
     private final String _dbConnectionString;
@@ -34,10 +25,10 @@ public class MySqlEducationStorage implements EducationStorage {
             + "VALUES (?, ?, ?, ?, ?, ?);";
     private final String removeStatement = "DELETE FROM citizen_registrations.educations where id =?";
 
-    public MySqlEducationStorage(String _dbConnectionString, String _dbUsername, String _dbPassword) {
-        this._dbConnectionString = _dbConnectionString;
-        this._dbUsername = _dbUsername;
-        this._dbPassword = _dbPassword;
+    public MySqlEducationStorage(String DB_CONN_STRING, String DB_USERNAME, String DB_PASSWORD) {
+        this._dbConnectionString = DB_CONN_STRING;
+        this._dbUsername = DB_USERNAME;
+        this._dbPassword = DB_PASSWORD;
     }
 
     @Override
@@ -63,7 +54,7 @@ public class MySqlEducationStorage implements EducationStorage {
                                 rs.getDate("enrollment_date").toLocalDate(),
                                 rs.getDate("graduation_date").toLocalDate());
                         Float check = rs.getFloat("final_grad");
-                        if (!(check == null)) {
+                        if (!(check == null || (check<2 ||  check>6))) {
                             ((GradedEducation) education).gotGraduated(check);
                             return ((GradedEducation) education);
                         }
@@ -104,6 +95,9 @@ public class MySqlEducationStorage implements EducationStorage {
                 pstmt.setBoolean(5, ((GradedEducation) education).isGraduated());
                 pstmt.setDouble(6, ((GradedEducation) education).getFinalGrade());
 
+            } else if (education.isGraduated()) {
+                pstmt.setBoolean(5, education.isGraduated());
+                pstmt.setNull(6, java.sql.Types.INTEGER);
             } else {
                 pstmt.setNull(5, java.sql.Types.INTEGER);
                 pstmt.setNull(6, java.sql.Types.INTEGER);
@@ -116,7 +110,7 @@ public class MySqlEducationStorage implements EducationStorage {
             }
 
         } catch (SQLException ex) {
-            throw new DALException("SQL failed \n" + ex.getSQLState() + "%n" + ex.getMessage() + "%n" + ex.getErrorCode(), ex);
+            throw new DALException("SQL failed \n" + ex.getSQLState() + "\n" + ex.getMessage() + "\n" + ex.getErrorCode(), ex);
 
         }
     }

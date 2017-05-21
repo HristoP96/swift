@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package SocialInsuranceStorage;
 
 import DALException.DALException;
@@ -14,12 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import personaldetails.Citizen;
 
-/**
- *
- * @author ickoto
- */
 public class MySqlSocialInsuranceStorage implements SocialInsuranceStorage {
-////
 
     private final String _dbConnectionString;
     private final String _dbUsername;
@@ -29,10 +19,10 @@ public class MySqlSocialInsuranceStorage implements SocialInsuranceStorage {
             + "VALUES(?,?,?,?);";
     private final String removeInsurance = "DELETE FROM citizen_registrations.socialinsurances where id =?";
 
-    public MySqlSocialInsuranceStorage(String _dbConnectionString, String _dbUsername, String _dbPassword) {
-        this._dbConnectionString = _dbConnectionString;
-        this._dbUsername = _dbUsername;
-        this._dbPassword = _dbPassword;
+    public MySqlSocialInsuranceStorage(String DB_CONN_STRING, String DB_USERNAME, String DB_PASSWORD) {
+        this._dbConnectionString = DB_CONN_STRING;
+        this._dbUsername = DB_USERNAME;
+        this._dbPassword = DB_PASSWORD;
     }
 
     @Override
