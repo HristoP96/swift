@@ -5,6 +5,7 @@
  */
 package citizenstoragemanagercli;
 
+import CitizenStorage.MySqlCitizenStorage;
 import DALException.DALException;
 import address.Address;
 import education.Education;
@@ -14,7 +15,6 @@ import education.HigherEducation;
 import java.time.LocalDate;
 import personaldetails.Citizen;
 import personaldetails.Gender;
-import static MySqlDataStorage.MySqlDataStorage.*;
 import education.PrimaryEducation;
 import education.SecondaryEducation;
 import insurance.SocialInsuranceRecord;
@@ -33,21 +33,21 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- *
- * @author ickoto
- */
 public class CitizenStorageManagerCLI {
 
     static final String DB_CONN_STRING = "jdbc:mysql://localhost:3306/citizen_registrations";
     static final String DB_USERNAME = "root";
     static final String DB_PASSWORD = "ickotomf56";
-    static final String path = "C:\\Users\\ickoto\\Desktop\\in_1000.txt";
+
+    public static MySqlCitizenStorage citizenStorage = new MySqlCitizenStorage(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
+
+    static final String PATH = "C:\\Users\\ickoto\\Desktop\\in_1000.txt";
     static DateTimeFormatter format = DateTimeFormatter.ofPattern("d.M.yyyy");
     static final String DISABLE_FOREIGN_KEYS = "SET FOREIGN_KEY_CHECKS = 0;";
     static String SELECT_DB_TABLE = "TRUNCATE TABLE ?";
     static final String ENABLE_FOREIGN_KEYS = "SET FOREIGN_KEY_CHECKS = 1;";
     static final String AI_RESET = "ALTER TABLE ? AUTO_INCREMENT =1";
+    
     private static final String addresses = "addresses";
     private static final String educations = "educations";
     private static final String insurances = "socialinsurances";
@@ -63,7 +63,7 @@ public class CitizenStorageManagerCLI {
 
         switch (command) {
             case "INSERT":
-                insertCitizens(path);
+                insertCitizens(PATH);
                 break;
             case "DELETE":
                 System.out.println("Which table do you want to delete");
@@ -117,10 +117,6 @@ public class CitizenStorageManagerCLI {
         return "TRUNCATE TABLE " + tableName;
     }
 
-    private static String resetAI(String tableName) {
-        return "ALTER TABLE " + tableName + " AUTO_INCREMENT =1";
-    }
-
     private static void deleteTable(String tableName) throws DALException {
         try (Connection conn = DriverManager.getConnection(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
                 PreparedStatement stmt = conn.prepareStatement(DISABLE_FOREIGN_KEYS);) {
@@ -133,7 +129,7 @@ public class CitizenStorageManagerCLI {
             }
 
             try (ResultSet rs = stmt.executeQuery(ENABLE_FOREIGN_KEYS)) {
-                System.out.println("Foreign_keys [" + tableName + "] were enabled");
+                System.out.println("Foreign_keys for [" + tableName + "] were enabled");
             }
 
         } catch (SQLException ex) {
@@ -141,6 +137,21 @@ public class CitizenStorageManagerCLI {
 
         }
 
+    }
+
+    private static String resetAI(String tableName) {
+        return "ALTER TABLE " + tableName + " AUTO_INCREMENT =1";
+    }
+
+    private static void reset_AI(String tableName) throws DALException {
+        try (Connection conn = DriverManager.getConnection(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(resetAI(tableName));) {
+            pstmt.execute();
+            System.out.println("Foreign_Keys were reset  for table " + tableName);
+        } catch (SQLException ex) {
+            throw new DALException(ex.getSQLState() + "\n" + ex.getMessage() + "\n" + ex.getErrorCode(), ex);
+
+        }
     }
 
     private static void deleteAllTables() throws DALException {
@@ -154,17 +165,6 @@ public class CitizenStorageManagerCLI {
         reset_AI(insurances);
         deleteTable(peopleEducations);
 
-    }
-
-    private static void reset_AI(String tableName) throws DALException {
-        try (Connection conn = DriverManager.getConnection(DB_CONN_STRING, DB_USERNAME, DB_PASSWORD);
-                PreparedStatement pstmt = conn.prepareStatement(resetAI(tableName));) {
-            pstmt.execute();
-            System.out.println("Foreign_Keys were reset  for table " + tableName);
-        } catch (SQLException ex) {
-            throw new DALException(ex.getSQLState() + "\n" + ex.getMessage() + "\n" + ex.getErrorCode(), ex);
-
-        }
     }
 
     private static void insertCitizens(String path) throws DALException {
@@ -286,7 +286,7 @@ public class CitizenStorageManagerCLI {
                     if (!(education.getGraduationDate().isAfter(LocalDate.now()))) {
 
                         ((GradedEducation) education).gotGraduated(Float.parseFloat(split[i + 4]));
-                        
+
                     }
                     person.addEducation(((GradedEducation) education));
 
